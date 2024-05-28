@@ -83,7 +83,7 @@ int cmpkeyk(const void *pt1, const void *pt2)
 }
 
 void copy_point(point* dest, point* source, int dim) {
-  memcpy(dest->point, source->point, n_dimensions*sizeof(double));
+  memcpy(dest->point, source->point, dim*sizeof(double));
   dest->index = source->index;
 }
 
