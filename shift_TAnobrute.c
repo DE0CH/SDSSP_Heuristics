@@ -31,6 +31,16 @@ Appropriate runtime limits should be looked for. 100 000 iterations were chosen 
 #define max(a,b) ((a)>(b)?(a):(b))
 #define min(a,b) ((a)<(b)?(a):(b))
 
+typedef struct{
+  double *point;
+  int index;
+} point; 
+
+typedef struct{
+  int key;
+  double value;
+} key_value;
+
 int n_dimensions, n_points;
 double *n_coords;
 double **coord;
@@ -39,7 +49,7 @@ int **point_index;
 int comparedim;
 bool curr_fill,fill;
 double *best_bord, *curr_bord;
-double **optiset;
+point *optiset;
 int *is_in;
 double epsilon;
 double globallower;
@@ -53,9 +63,11 @@ double cput;
 
 int cmpdbl(const void *a, const void *b)
 {
-  if ((*(double *)a) < (*(double *)b))
+  key_value *x=(key_value*)a;
+  key_value *y=(key_value*)b;
+  if (x->value < y->value)
     return -1;
-  else if ((*(double *) a) == (*(double *)b))
+  else if (x->value == y->value)
     return 0;
   return 1;
 }
@@ -68,6 +80,11 @@ int cmpkeyk(const void *pt1, const void *pt2)
   else if (a>b)
     return 1;
   return 0;
+}
+
+void copy_point(point* dest, point* source, int dim) {
+  memcpy(dest->point, source->point, n_dimensions*sizeof(double));
+  dest->index = source->index;
 }
 
 void usage()
@@ -160,7 +177,7 @@ void round_point_extradown(double *point, int *output)
   }
 }
 
-void process_coord_data(double **points, int n, int d)
+void process_coord_data(point *points, int n, int d)
 {
   int i,j;
   double tmp_coords[n+2];
@@ -176,7 +193,7 @@ void process_coord_data(double **points, int n, int d)
   coord = (double**)malloc(n_dimensions*sizeof(double *));
   for (i=0; i<n_dimensions; i++) {
     for (j=0; j<n_points; j++)
-      tmp_coords[j+1]=points[j][i];
+      tmp_coords[j+1]=points[j].point[i];
     tmp_coords[0]=0.0;
     tmp_coords[n+1]=1.0;
     quicksort(1, n, tmp_coords);
@@ -214,10 +231,10 @@ void process_coord_data(double **points, int n, int d)
     point_index[i]=(int*)malloc(n_dimensions*sizeof(int));
   for (i=0; i<n_points; i++)
     for (j=0; j<n_dimensions; j++) {
-      idx=get_index_up(j, points[i][j]);
-      if (coord[j][idx] != points[i][j]) {
+      idx=get_index_up(j, points[i].point[j]);
+      if (coord[j][idx] != points[i].point[j]) {
 	fprintf(stderr, "ERROR: located incorrect coordinate (%g at %d, wanted %g).\n",
-		coord[j][idx], idx, points[i][j]);
+		coord[j][idx], idx, points[i].point[j]);
 	abort();
       }
       point_index[i][j] = idx;
@@ -801,7 +818,7 @@ double best_of_rounded_delta(int *xn_plus)
 
 
 
-double oldmain(double **pointset, int n, int d) 
+double oldmain(point *pointset, int n, int d) 
 {
   int k[d], start[d];
   
@@ -1162,7 +1179,7 @@ double best_of_rounded_bardelta(int *xn_minus, int *xn_extraminus, int *xc_index
 
 
 
-double oldmainbar(double **pointset, int n, int d)
+double oldmainbar(point *pointset, int n, int d)
 {
   int k[d], start[d];
   
@@ -1432,7 +1449,7 @@ double oldmainbar(double **pointset, int n, int d)
 ACTUAL SHIFT HEURISTIC
 ********************************/
 
-int find_point(double **copysorted,double temp_coord, int cho, int npoints){
+int find_point(key_value **copysorted,double temp_coord, int cho, int npoints){
 	int a,b,mid;
 	a=0;
 	b=npoints-1;
@@ -1440,10 +1457,10 @@ int find_point(double **copysorted,double temp_coord, int cho, int npoints){
 	found=false;
 	mid=(a+b)/2;
 	while (b-a>1 && !found){
-		if (copysorted[cho][mid]== temp_coord){
+		if (copysorted[cho][mid].value == temp_coord){
 			return(mid);
 		}
-		else if (copysorted[cho][mid]< temp_coord){
+		else if (copysorted[cho][mid].value < temp_coord){
 			a=mid;
 			mid=(a+b)/2;
 		}
@@ -1454,7 +1471,7 @@ int find_point(double **copysorted,double temp_coord, int cho, int npoints){
 			 
 	}
 	if (b-a==1){ // This only works because we KNOW the box should be given by some coord. With double precision there might be some mistake in the volume calc-> inexact coord. We take the closest one.
-		if (copysorted[cho][b]-temp_coord> temp_coord-copysorted[cho][a])
+		if (copysorted[cho][b].value-temp_coord> temp_coord-copysorted[cho][a].value)
 			return b;
 		else
 			return a;
@@ -1481,7 +1498,7 @@ void replace(double **pointset, double **Orig_pointset, int kpoints, int npoints
 
 
 
-double shift(int npoints, int kpoints, int dim, double **Orig_pointset)
+double shift(int npoints, int kpoints, int dim, point *Orig_pointset)
 {
   
   // SHuffle our point array, shuffle directly in Orig_pointset. Do this in main?
@@ -1494,26 +1511,24 @@ double shift(int npoints, int kpoints, int dim, double **Orig_pointset)
   
 	
 // Sorting the points in each dim
-  double **copysorted=(double**)malloc(dim*sizeof(int*));
-  double **subset;
-  double **temp_subset;
+  key_value **copysorted=(key_value**)malloc(dim*sizeof(key_value*));
+  point *subset;
+  point *temp_subset;
   int **orderings=(int**)malloc(dim*sizeof(int*));// The ordering[i][j]=h means that point j is h-th in the ordering in dimension i.
   int **revorderings=(int**)malloc(dim*sizeof(int*)); // revordering[i][j]=h means that the j-th point in dimension i is point h.
   for (i=0;i<dim;i++){
-	  copysorted[i]=(double*)malloc(npoints*sizeof(double));
+	  copysorted[i]=(key_value*)malloc(npoints*sizeof(key_value));
 	  orderings[i]=(int*)malloc(npoints*sizeof(int));
 	  revorderings[i]=(int*)malloc(npoints*sizeof(int));
-	  for (j=0;j<npoints;j++)
-		  copysorted[i][j]=Orig_pointset[j][i]; // Warning dimensions switched
-	  qsort(&(copysorted[i][0]), npoints, sizeof(double), cmpdbl);
+	  for (j=0;j<npoints;j++) {
+		  copysorted[i][j].value=Orig_pointset[j].point[i]; // Warning dimensions switched
+      copysorted[i][j].key=j;
+    }
+	  qsort(&(copysorted[i][0]), npoints, sizeof(key_value), cmpdbl);
 	  for (j=0;j<npoints;j++){// Need points in general position for this
-		  for (h=0;h<npoints;h++){
-			  if (copysorted[i][j]==Orig_pointset[h][i]){ // Same as above
-				  orderings[i][h]=j;
-				  revorderings[i][j]=h;
-				  break; // We supposed general position
-			  }
-		  }	  
+      h = copysorted[i][j].key;
+      orderings[i][h]=j;
+      revorderings[i][j]=h;
 	  } 
   }
   is_in =(int*)malloc(npoints*sizeof(int));
@@ -1523,13 +1538,13 @@ double shift(int npoints, int kpoints, int dim, double **Orig_pointset)
 	  else
 		is_in[i]=-1;
 	}
-	subset=(double**)malloc(kpoints*sizeof(double*)); // INTRODUCE kpoints
-	temp_subset=(double**)malloc(kpoints*sizeof(double*));
+	subset=(point*)malloc(kpoints*sizeof(point)); // INTRODUCE kpoints
+	temp_subset=(point*)malloc(kpoints*sizeof(point));
 	for (i=0;i<kpoints;i++){// Our current point set and create a future tep_subset for the possible changes.
-		subset[i]=(double*)malloc(dim*sizeof(double));
-		temp_subset[i]=(double*)malloc(dim*sizeof(double));
-		memcpy(subset[i],Orig_pointset[i], dim*sizeof(double));
-		memcpy(temp_subset[i],Orig_pointset[i], dim*sizeof(double));
+		subset[i].point=(double*)malloc(dim*sizeof(double));
+		temp_subset[i].point=(double*)malloc(dim*sizeof(double));
+    copy_point(&subset[i],&Orig_pointset[i], dim);
+    copy_point(&temp_subset[i],&Orig_pointset[i], dim);
 	}
 	fprintf(stderr, "Sorted points\n");
 	//upper = oydiscr(temp_subset, dim, kpoints,&lower); // CHANGE HERE
@@ -1607,9 +1622,9 @@ double shift(int npoints, int kpoints, int dim, double **Orig_pointset)
 					if (is_in[d]< -0.5){// The point was not already in the set
 						c=list_points[actu_dim]; // Before we had the position and not the point number
 						for (i=0;i<kpoints;i++)
-							memcpy(temp_subset[i],subset[i],dim*sizeof(double));
+              copy_point(&temp_subset[i],&subset[i],dim);
 						tempo=is_in[c];
-						memcpy(temp_subset[tempo],Orig_pointset[d],dim*sizeof(double));
+            copy_point(&temp_subset[tempo],&Orig_pointset[d],dim);
 						//curr_disc = oydiscr(temp_subset, dim, kpoints, &lower); //CHANGE HERE
 						curr_disco=oldmain(temp_subset,kpoints,dim);
 						curr_discc=oldmainbar(temp_subset,kpoints,dim);
@@ -1628,7 +1643,7 @@ double shift(int npoints, int kpoints, int dim, double **Orig_pointset)
 						if (curr_disc<upper) {// Our replacement is good
 							chosen=true;
 							nb_natural+=1;
-							memcpy(subset[tempo],Orig_pointset[d],dim*sizeof(double));
+              copy_point(&temp_subset[tempo],&Orig_pointset[d],dim);
 							is_in[d]=tempo;
 							is_in[c]=-1;
 							fill=curr_fill;
@@ -1659,9 +1674,9 @@ double shift(int npoints, int kpoints, int dim, double **Orig_pointset)
 					if (is_in[d]< -0.5){// The point was not already in the set
 						c=list_points[actu_dim]; // Before we had the position and not the point number
 						for (i=0;i<kpoints;i++)
-							memcpy(temp_subset[i],subset[i],dim*sizeof(double));
+              copy_point(&temp_subset[tempo],&Orig_pointset[d],dim);
 						tempo=is_in[c];							
-						memcpy(temp_subset[tempo],Orig_pointset[d],dim*sizeof(double));
+            copy_point(&temp_subset[tempo],&Orig_pointset[d],dim);
 						//curr_disc = oydiscr(temp_subset, dim, kpoints, &lower); // CHANGE HERE
 						curr_disco=oldmain(temp_subset,kpoints,dim);
 						curr_discc=oldmainbar(temp_subset,kpoints,dim);
@@ -1680,7 +1695,7 @@ double shift(int npoints, int kpoints, int dim, double **Orig_pointset)
 						if (curr_disc<upper) {// Our replacement is good
 							chosen=true;
 							nb_natural+=1;
-							memcpy(subset[tempo],Orig_pointset[d],dim*sizeof(double));
+              copy_point(&temp_subset[tempo],&Orig_pointset[d],dim);
 							is_in[d]=tempo;
 							is_in[c]=-1;
 							
@@ -1701,7 +1716,7 @@ double shift(int npoints, int kpoints, int dim, double **Orig_pointset)
 	}
 	fprintf(stderr,"Nb calcu:%d, Final discre:%lf\n",nb_calc,upper);
 	for (i=0;i<kpoints;i++)
-		memcpy(optiset[i],subset[i], dim*sizeof(double));
+    copy_point(&optiset[i],&subset[i],dim);
 		
 	for (i=0;i<dim;i++){
 		free(copysorted[i]);
@@ -1709,8 +1724,8 @@ double shift(int npoints, int kpoints, int dim, double **Orig_pointset)
 		free(revorderings[i]);
 	}
 	for (i=0;i<kpoints;i++){
-		free(subset[i]);
-		free(temp_subset[i]);
+		free(subset[i].point);
+		free(temp_subset[i].point);
 	}
 	free(copysorted);
 	free(subset);
@@ -1736,7 +1751,7 @@ int main(int argc, char **argv)
   double upper,lower;
   int nb_tries;
   bool fill; //Tracks if the worst box was under or over filled
-  double **Orig_pointset;
+  point *Orig_pointset;
   FILE *random;
   unsigned int seed;
   srand(1);
@@ -1752,12 +1767,13 @@ int main(int argc, char **argv)
   kpoints=atoi(argv[4]);
   fprintf(stderr, "Reading dim %d npoints %d kpoints %d ", dim, npoints,kpoints);
   
-  Orig_pointset = (double**)malloc(npoints*sizeof(double*));
+  Orig_pointset = (point*)malloc(npoints*sizeof(point));
   for (i=0; i<npoints; i++) {
-    Orig_pointset[i] = (double*)malloc(dim*sizeof(double));
+    Orig_pointset[i].point = (double*)malloc(dim*sizeof(double));
+    Orig_pointset[i].index = i;
     for (j=0; j<dim; j++) {
       // newline counts as whitespace
-      if (!fscanf(pointfile, "%lg ", &(Orig_pointset[i][j]))) {
+      if (!fscanf(pointfile, "%lg ", &(Orig_pointset[i].point[j]))) {
 	fprintf(stderr, "File does not contain enough data points!\n");
 	exit(EXIT_FAILURE);
       }
@@ -1767,26 +1783,21 @@ int main(int argc, char **argv)
   for (nb_tries=0;nb_tries<10;nb_tries++){
   int rando1;
   int rando2;
-  double *swap;
-  swap=(double*)malloc(dim*sizeof(double));
+  point swap;
   //SHUFFLING TIME: WORKS WITHOUT
   for (i=0;i<10*npoints;i++){
 	  start=clock();
 	  rando1= rand() % npoints;
 	  rando2=rand() % npoints;
-	  for (j=0;j<dim;j++){
-		  swap[j]=Orig_pointset[rando1][j];
-		  Orig_pointset[rando1][j]=Orig_pointset[rando2][j];
-		  Orig_pointset[rando2][j]=swap[j];
+    swap = Orig_pointset[rando1];
+    Orig_pointset[rando1] = Orig_pointset[rando2];
+    Orig_pointset[rando2] = swap;
   }
-  }
-  
-  free(swap);
   epsilon=1;
   for (i=0;i<npoints;i++){
 	  for (j=i+1;j<npoints;j++){
-		  if (fabs(Orig_pointset[i][0]-Orig_pointset[j][0])<epsilon)
-			  epsilon=fabs(Orig_pointset[i][0]-Orig_pointset[j][0]);
+		  if (fabs(Orig_pointset[i].point[0]-Orig_pointset[j].point[0])<epsilon)
+			  epsilon=fabs(Orig_pointset[i].point[0]-Orig_pointset[j].point[0]);
 	  }
   }
   best_bord=(double*)malloc(dim*sizeof(double));
@@ -1797,11 +1808,12 @@ int main(int argc, char **argv)
 		best_bord[i]=0;
 		curr_bord[i]=0;
 	}
-  optiset=(double**)malloc(kpoints*sizeof(double*));  
+  optiset=(point*)malloc(kpoints*sizeof(point));  
   fill=false; // Should be useless
   for (i=0;i<kpoints;i++){
-	  optiset[i]=(double*)malloc(dim*sizeof(double));
-	  memcpy(optiset[i],Orig_pointset[i], dim*sizeof(double));
+	  optiset[i].point=(double*)malloc(dim*sizeof(double));
+	  memcpy(optiset[i].point,Orig_pointset[i].point, dim*sizeof(double));
+    optiset[i].index = Orig_pointset[i].index;
   }
    
   upper=shift(npoints,kpoints,dim,Orig_pointset);
@@ -1811,22 +1823,26 @@ int main(int argc, char **argv)
 	  super_best=upper;
   FILE *fp; // Move our opti point set to a file
   fp=fopen(argv[5],"w");
+  FILE *fpi;
+  fpi=fopen(argv[6],"w");
   fprintf(fp, "n=%d,k=%d,dim=%d, discrepancy=%lf, runtime=%lf\n",npoints,kpoints,dim,upper,cput);
   for (i=0; i<kpoints;i++){
+    fprintf(fpi,"%d\n",optiset[i].index);
 	  for (j=0;j<dim;j++){
-		  fprintf(fp,"%lf ",optiset[i][j]);
+		  fprintf(fp,"%lf ",optiset[i].point[j]);
 	  }
 	  fprintf(fp,"\n");
   }
   fclose(fp);
+  fclose(fpi);
   }
   for(i=0;i<kpoints;i++)
-	  free(optiset[i]);
+	  free(optiset[i].point);
   free(optiset);
   }
   fclose(pointfile);
   for (i=0;i<npoints;i++)
-	  free(Orig_pointset[i]);
+	  free(Orig_pointset[i].point);
   free(Orig_pointset);
   free(curr_bord);
   free(best_bord);
