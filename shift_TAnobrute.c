@@ -92,7 +92,7 @@ int *coordinate;
 // I made a replacement stump
 int dbl_compare(const void *a, const void *b)
 {
-  const double *xp=a, *yp=b;
+  const double *xp=(double*)a, *yp=(double*)b;
   const double x=*xp, y=*yp;
   if (x<y)
     return -1;
@@ -169,11 +169,11 @@ void process_coord_data(double **points, int n, int d)
   //initialise n_coords[], coord[][]
   n_dimensions=d;
   n_points=n;
-  coordinate=malloc(d*sizeof(int));
+  coordinate=(int*)malloc(d*sizeof(int));
   for (i=0; i<d; i++)
     coordinate[i]=i;
-  n_coords = malloc(n_dimensions*sizeof(double));
-  coord = malloc(n_dimensions*sizeof(double *));
+  n_coords = (double*)malloc(n_dimensions*sizeof(double));
+  coord = (double**)malloc(n_dimensions*sizeof(double *));
   for (i=0; i<n_dimensions; i++) {
     for (j=0; j<n_points; j++)
       tmp_coords[j+1]=points[j][i];
@@ -190,7 +190,7 @@ void process_coord_data(double **points, int n, int d)
       prev_coord=tmp_coords[j];
     }
     // 2. transfer
-    coord[i]=malloc(n_uniq*sizeof(double));
+    coord[i]=(double*)malloc(n_uniq*sizeof(double));
     idx=1;
     prev_coord=tmp_coords[0];
     coord[i][0]=prev_coord;
@@ -209,9 +209,9 @@ void process_coord_data(double **points, int n, int d)
   // finished setup for: n_coords[], coord[][]
 
   // next: transfer point set to into point_index
-  point_index=malloc(n_points*sizeof(int *));
+  point_index=(int**)malloc(n_points*sizeof(int *));
   for (i=0; i<n_points; i++)
-    point_index[i]=malloc(n_dimensions*sizeof(int));
+    point_index[i]=(int*)malloc(n_dimensions*sizeof(int));
   for (i=0; i<n_points; i++)
     for (j=0; j<n_dimensions; j++) {
       idx=get_index_up(j, points[i][j]);
@@ -1494,15 +1494,15 @@ double shift(int npoints, int kpoints, int dim, double **Orig_pointset)
   
 	
 // Sorting the points in each dim
-  double **copysorted=malloc(dim*sizeof(int*));
+  double **copysorted=(double**)malloc(dim*sizeof(int*));
   double **subset;
   double **temp_subset;
-  int **orderings=malloc(dim*sizeof(int*));// The ordering[i][j]=h means that point j is h-th in the ordering in dimension i.
-  int **revorderings=malloc(dim*sizeof(int*)); // revordering[i][j]=h means that the j-th point in dimension i is point h.
+  int **orderings=(int**)malloc(dim*sizeof(int*));// The ordering[i][j]=h means that point j is h-th in the ordering in dimension i.
+  int **revorderings=(int**)malloc(dim*sizeof(int*)); // revordering[i][j]=h means that the j-th point in dimension i is point h.
   for (i=0;i<dim;i++){
-	  copysorted[i]=malloc(npoints*sizeof(double));
-	  orderings[i]=malloc(npoints*sizeof(int));
-	  revorderings[i]=malloc(npoints*sizeof(int));
+	  copysorted[i]=(double*)malloc(npoints*sizeof(double));
+	  orderings[i]=(int*)malloc(npoints*sizeof(int));
+	  revorderings[i]=(int*)malloc(npoints*sizeof(int));
 	  for (j=0;j<npoints;j++)
 		  copysorted[i][j]=Orig_pointset[j][i]; // Warning dimensions switched
 	  qsort(&(copysorted[i][0]), npoints, sizeof(double), cmpdbl);
@@ -1516,18 +1516,18 @@ double shift(int npoints, int kpoints, int dim, double **Orig_pointset)
 		  }	  
 	  } 
   }
-  is_in =malloc(npoints*sizeof(int));
+  is_in =(int*)malloc(npoints*sizeof(int));
   for (i=0;i<npoints;i++){
 	  if (i<kpoints)
 		is_in[i]=i;
 	  else
 		is_in[i]=-1;
 	}
-	subset=malloc(kpoints*sizeof(double*)); // INTRODUCE kpoints
-	temp_subset=malloc(kpoints*sizeof(double*));
+	subset=(double**)malloc(kpoints*sizeof(double*)); // INTRODUCE kpoints
+	temp_subset=(double**)malloc(kpoints*sizeof(double*));
 	for (i=0;i<kpoints;i++){// Our current point set and create a future tep_subset for the possible changes.
-		subset[i]=malloc(dim*sizeof(double));
-		temp_subset[i]=malloc(dim*sizeof(double));
+		subset[i]=(double*)malloc(dim*sizeof(double));
+		temp_subset[i]=(double*)malloc(dim*sizeof(double));
 		memcpy(subset[i],Orig_pointset[i], dim*sizeof(double));
 		memcpy(temp_subset[i],Orig_pointset[i], dim*sizeof(double));
 	}
@@ -1554,7 +1554,7 @@ double shift(int npoints, int kpoints, int dim, double **Orig_pointset)
 	bool chosen,boom,problem;
 	nb_natural=0;nb_brute=0;
 	double *top_bord;
-	top_bord=malloc(dim*sizeof(double));
+	top_bord=(double*)malloc(dim*sizeof(double));
 	//memcpy(top_bord,best_bord,dim*sizeof(double));
 	for (i=0;i<dim;i++)
 		top_bord[i]=best_bord[i];
@@ -1565,7 +1565,7 @@ double shift(int npoints, int kpoints, int dim, double **Orig_pointset)
 	nb_runs=1000; // Tweak it here directly (useless for the moment)
 	problem=false;
 	int *list_points;
-	list_points=malloc(dim*sizeof(int));
+	list_points=(int*)malloc(dim*sizeof(int));
 	//
 	for (b=0; b<nb_runs;b++){
 		chosen_dim=rand() %dim;
@@ -1752,9 +1752,9 @@ int main(int argc, char **argv)
   kpoints=atoi(argv[4]);
   fprintf(stderr, "Reading dim %d npoints %d kpoints %d ", dim, npoints,kpoints);
   
-  Orig_pointset = malloc(npoints*sizeof(double*));
+  Orig_pointset = (double**)malloc(npoints*sizeof(double*));
   for (i=0; i<npoints; i++) {
-    Orig_pointset[i] = malloc(dim*sizeof(double));
+    Orig_pointset[i] = (double*)malloc(dim*sizeof(double));
     for (j=0; j<dim; j++) {
       // newline counts as whitespace
       if (!fscanf(pointfile, "%lg ", &(Orig_pointset[i][j]))) {
@@ -1768,7 +1768,7 @@ int main(int argc, char **argv)
   int rando1;
   int rando2;
   double *swap;
-  swap=malloc(dim*sizeof(double));
+  swap=(double*)malloc(dim*sizeof(double));
   //SHUFFLING TIME: WORKS WITHOUT
   for (i=0;i<10*npoints;i++){
 	  start=clock();
@@ -1789,18 +1789,18 @@ int main(int argc, char **argv)
 			  epsilon=fabs(Orig_pointset[i][0]-Orig_pointset[j][0]);
 	  }
   }
-  best_bord=malloc(dim*sizeof(double));
-  curr_bord=malloc(dim*sizeof(double));
+  best_bord=(double*)malloc(dim*sizeof(double));
+  curr_bord=(double*)malloc(dim*sizeof(double));
   
   
 	for (int i=0;i<dim;i++){ // Shouldn't be necessary as oydiscr necessarily modifies this at some point?
 		best_bord[i]=0;
 		curr_bord[i]=0;
 	}
-  optiset=malloc(kpoints*sizeof(double*));  
+  optiset=(double**)malloc(kpoints*sizeof(double*));  
   fill=false; // Should be useless
   for (i=0;i<kpoints;i++){
-	  optiset[i]=malloc(dim*sizeof(double));
+	  optiset[i]=(double*)malloc(dim*sizeof(double));
 	  memcpy(optiset[i],Orig_pointset[i], dim*sizeof(double));
   }
    
