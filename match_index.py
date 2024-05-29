@@ -30,11 +30,18 @@ def build_list(values):
 # %%
 def distance_inf(point1, point2):
     ans = 0
+    point = (point1[0], point2[0])
     assert len(point1) == len(point2)
     for i in range(len(point1)):
-        ans = max(ans, abs(point1[i] - point2[i]))
-    return ans
+        new_ans = abs(point1[i] - point2[i])
+        if new_ans > ans:
+            ans = new_ans
+            point = (point1[i], point2[i])
+    return ans, point
 
+def isclose(a, b, rel_tol=1e-15, abs_tol=0.0):
+    ans = abs(a-b) <= max(Decimal(rel_tol) * max(abs(a), abs(b)), abs_tol)
+    return ans
 
 # %%
 def match_index(index_list, values):
@@ -44,16 +51,19 @@ def match_index(index_list, values):
         found = 0
         found_l = []
         for i, w in enumerate(index_list.keys()):
-            if distance_inf(v, w) <= 0.000001:
+            if isclose(*distance_inf(v, w)[1]):
                 if found < 1:
                     results.append(index_list[w][pointers[i]])
                     pointers[i] += 1
                 found_l.append(list(map(str, w)))
                 found += 1
         if found > 1:
-            print(found_l)
-            print(v)
+            print(found)
+            for vv in found_l:
+                print(*vv)
+            print(*list(map(str, v)))
             print("Warning: Multiple matches found")
+            raise ValueError("Multiple matches found")
         if found == 0:
             raise ValueError("No match found")
     return results
