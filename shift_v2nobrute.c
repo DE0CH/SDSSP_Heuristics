@@ -894,7 +894,7 @@ int main(int argc, char **argv)
     }
   }
   double super_best=1.0;
-  for (nb_tries=0;nb_tries<10;nb_tries++){
+  for (nb_tries=0;nb_tries<5000;nb_tries++){
   int rando1;
   int rando2;
   double *swap;
@@ -944,7 +944,7 @@ int main(int argc, char **argv)
   fprintf(fp, "n=%d,k=%d,dim=%d, discrepancy=%lf, runtime=%lf\n",npoints,kpoints,dim,upper,cput);
   for (i=0; i<kpoints;i++){
 	  for (j=0;j<dim;j++){
-		  fprintf(fp,"%lf ",optiset[i][j]);
+		  fprintf(fp,"%.18e ",optiset[i][j]);
 	  }
 	  fprintf(fp,"\n");
   }
