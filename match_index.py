@@ -66,6 +66,7 @@ if __name__ == '__main__':
     parser.add_argument('origin_csv', type=str)
     parser.add_argument('remaining_points', type=str)
     parser.add_argument('output_csv', type=str)
+    parser.add_argument('complement_csv', type=str)
     args = parser.parse_args()
     with open(args.origin_csv, 'r') as f:
         origin_csv = f.readlines()
@@ -77,4 +78,12 @@ if __name__ == '__main__':
         f.write(origin_csv[0])
         for i in ans:
             f.write(origin_csv[i+1])
+    
+    with open(args.complement_csv, 'w') as f:
+        f.write(origin_csv[0])
+        ans = set(ans)
+        for i in range(len(origin_csv)-1):
+            if i not in ans:
+                f.write(origin_csv[i+1])
+    
 
