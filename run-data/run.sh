@@ -13,4 +13,4 @@ command_function() {
 export -f command_function
 
 # Run the commands in parallel with 3 cores
-parallel -j 2 command_function ::: "${values[@]}"
+parallel -j 10 command_function ::: "${values[@]}"
