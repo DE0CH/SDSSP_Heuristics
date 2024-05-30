@@ -46,8 +46,6 @@ command_function() {
     ${executable} ${input_file} ${dimension} ${num_points} ${value} subset_${value}.txt 2>&1 | ts > log_${value}.txt
 }
 
-# Export the function to be used in parallel
-export -f command_function
 
 # Export the function if parallel execution is used
 if [ "$num_cores" -gt 1 ]; then

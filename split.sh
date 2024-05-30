@@ -2,23 +2,30 @@
 
 # Function to show usage
 usage() {
-    echo "Usage: $0 -v values -j num_cores"
-    echo "  -v values      A comma-separated list of values (e.g., 40,60,80,90)"
-    echo "  -j num_cores   Number of cores to use in parallel"
+    echo "Usage: $0 dimension values [-j num_cores]"
+    echo "  dimension    Dimension value (e.g., 3)"
+    echo "  values       A comma-separated list of values (number of points in the subset) (e.g., 40,60,80,90)"
+    echo "  -j num_cores (Optional) Number of cores to use in parallel (default is 1)"
     exit 1
 }
 
-# Ensure both options are provided
-if [ $# -eq 0 ]; then
+# Ensure at least 2 positional arguments are provided
+if [ "$#" -lt 2 ]; then
     usage
 fi
 
-# Parse command line arguments
-while getopts "v:j:" opt; do
+# Assign positional arguments to dimension and values
+dimension="$1"
+shift
+IFS=',' read -r -a values <<< "$1"
+shift
+
+# Default number of cores
+num_cores=1
+
+# Parse optional arguments
+while getopts "j:" opt; do
     case $opt in
-        v)
-            IFS=',' read -r -a values <<< "$OPTARG"
-            ;;
         j)
             num_cores="$OPTARG"
             ;;
@@ -28,10 +35,6 @@ while getopts "v:j:" opt; do
     esac
 done
 
-# Ensure required arguments are set
-if [ -z "${values+x}" ] || [ -z "${num_cores+x}" ]; then
-    usage
-fi
 # Define the function that will run the command
 command_function() {
     local value=$1
@@ -46,8 +49,14 @@ command_function() {
     head -n 1 other_half_subset_${value}.txt | python3 -c 'import sys; import re; print("other half subset:", f"k={sys.argv[1]}", re.search(r"discrepancy=([\d\.]+)", input())[0])' ${value}
 }
 
-# Export the function to be used in parallel
-export -f command_function
-
-# Run the commands in parallel with 3 cores
-parallel -j ${num_cores} command_function ::: "${values[@]}"
+# Export the function if parallel execution is used
+if [ "$num_cores" -gt 1 ]; then
+    export -f command_function
+    # Run the commands in parallel with the specified number of cores
+    parallel -j "$num_cores" command_function ::: "${values[@]}"
+else
+    # Run the commands sequentially
+    for value in "${values[@]}"; do
+        command_function "$value"
+    done
+fi
