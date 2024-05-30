@@ -4,7 +4,7 @@ This code is adapted from <https://github.com/frclement/SDSSP_Heuristics> for sp
 
 ## Dependencies:
 1. Python 3
-1. gcc and associated libaries (should be included in common linux distros)
+1. gcc and associated libaries, as well as common command line utilities (should be included in common linux distros)
 1. [`parallel`](https://manpages.ubuntu.com/manpages/jammy/man1/parallel.1.html) tool on linux (only if you want to run in parallel)
 
 
