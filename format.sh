@@ -3,45 +3,54 @@
 usage() {
     echo "Usage: $0 csv_file dimension values [-j num_cores]"
     echo "  csv_file     The CSV file to process (e.g., df_crit.csv)"
-    echo "  dimension    Dimension value (e.g., 3)"
     echo "  values       A comma-separated list of values (number of points in the subset) (e.g., 40,60,80,90)"
     echo "  -j num_cores (Optional) Number of cores to use in parallel (default is 1)"
     exit 1
 }
 
-# Ensure at least 3 positional arguments are provided
-if [ "$#" -lt 3 ]; then
-    usage
-fi
-
-# Assign positional arguments
-csv_file="$1"
-shift
-dimension="$1"
-shift
-IFS=',' read -r -a values <<< "$1"
-shift
-
 # Default number of cores
 num_cores=1
 
-# Parse optional arguments
-while getopts "j:" opt; do
-    case $opt in
-        j)
-            num_cores="$OPTARG"
-            ;;
-        *)
-            usage
-            ;;
-    esac
+POSITIONAL_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -j|--num_cores)
+      num_cores="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -*|--*)
+      echo "Unknown option $1"
+      usage
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1") # save positional arg
+      shift # past argument
+      ;;
+  esac
 done
+
+# Restore positional parameters
+set -- "${POSITIONAL_ARGS[@]}"
+
+# Ensure at least 3 positional arguments are provided
+if [ "$#" -lt 2 ]; then
+    usage
+fi
+
+# Parse positional arguments
+csv_file="$1"
+IFS=',' read -r -a values <<< "$2"
+shift 2
+
+export csv_file
 
 # Define the function that will run the command
 command_function() {
     local value=$1
     python3 ../match_index.py "$csv_file" "subset_${value}.txt" "subset_${value}.csv" /dev/null 
-    head -n 1 "subset_${value}.txt" | grep -oP 'discrepancy=\K[\d.]+' | awk '{print "k=" ENVIRON["value"], $0}'
+    head -n 1 "subset_${value}.txt" | python3 -c 'import sys; import re; print(f"k={sys.argv[1]}", re.search(r"discrepancy=([\d\.]+)", input())[0])' "${value}"
 }
 
 # Export the function to be used in parallel
