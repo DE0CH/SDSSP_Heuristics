@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 usage() {
-    echo "Usage: $0 csv_file dimension values [-j num_cores]"
+    echo "Usage: $0 csv_file values [-j num_cores]"
     echo "  csv_file     The CSV file to process (e.g., df_crit.csv)"
     echo "  values       A comma-separated list of values (number of points in the subset) (e.g., 40,60,80,90)"
     echo "  -j num_cores (Optional) Number of cores to use in parallel (default is 1)"
