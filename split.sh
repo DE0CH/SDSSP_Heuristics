@@ -45,9 +45,8 @@ command_function() {
     python3 ../match_index.py subset_${value}.csv half_subset_${value}.txt half_subset_${value}.csv other_half_subset_${value}.csv
     python3 ../extract_csv.py other_half_subset_${value}.csv other_half_subset_${value}.txt
     ./ao.out other_half_subset_${value}.txt 3 ${value} $(expr ${value} / 2) other_half_subset_${value}.txt 2>/dev/null > /dev/null
-    head -n 1 half_subset_${value}.txt | python3 -c 'import sys; import re; print("half subset:", f"k={sys.argv[1]}", re.search(r"discrepancy=([\d\.]+)", input())[0])' ${value}
-    head -n 1 other_half_subset_${value}.txt | python3 -c 'import sys; import re; print("other half subset:", f"k={sys.argv[1]}", re.search(r"discrepancy=([\d\.]+)", input())[0])' ${value}
-}
+    head -n 1 half_subset_${value}.txt | grep -oP 'discrepancy=\K[\d.]+' | awk '{print "k=" ENVIRON["value"], $0}'
+    head -n 1 other_half_subset_${value}.txt | grep -oP 'discrepancy=\K[\d.]+' | awk '{print "k=" ENVIRON["value"], $0}'
 
 # Export the function if parallel execution is used
 if [ "$num_cores" -gt 1 ]; then
