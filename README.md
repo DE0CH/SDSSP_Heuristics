@@ -17,7 +17,7 @@ gcc shift_v2nobrute.c -lm -O3
 ```bash
 mkdir run-data
 ```
-1. cd to the directory. IMPORTANT: the scripts will overwrite files in cwd without warning.
+1. cd to the directory. WARNING: the scripts will overwrite files in cwd without warning.
 ```bash
 cd run-data
 ```
