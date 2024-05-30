@@ -58,10 +58,10 @@ command_function() {
     # make a temp file
     tpfile=$(mktemp)
     python3 ../extract_csv.py subset_${value}.csv ${tpfile}
-    SHIFT_TRIES=5000 ${executable} ${tpfile} 3 ${value} $(expr ${value} / 2) half_subset_${value}.txt 2>&1 | ts > log_half_subset_${value}.txt
+    SHIFT_TRIES=5000 ${executable} ${tpfile} ${dimension} ${value} $(expr ${value} / 2) half_subset_${value}.txt 2>&1 | ts > log_half_subset_${value}.txt
     python3 ../match_index.py subset_${value}.csv half_subset_${value}.txt half_subset_${value}.csv other_half_subset_${value}.csv
     python3 ../extract_csv.py other_half_subset_${value}.csv other_half_subset_${value}.txt
-    SHIFT_TRIES=1 ${executable} other_half_subset_${value}.txt 3 ${value} $(expr ${value} / 2) other_half_subset_${value}.txt 2> /dev/null > /dev/null
+    SHIFT_TRIES=1 ${executable} other_half_subset_${value}.txt ${dimension} ${value} $(expr ${value} / 2) other_half_subset_${value}.txt 2> /dev/null > /dev/null
     head -n 1 half_subset_${value}.txt | python3 -c 'import sys; import re; print("half subset:", f"k={sys.argv[1]}", re.search(r"discrepancy=([\d\.]+)", input())[0])' "${value}"
     head -n 1 other_half_subset_${value}.txt | python3 -c 'import sys; import re; print("other half subset:", f"k={sys.argv[1]}", re.search(r"discrepancy=([\d\.]+)", input())[0])' "${value}"
     rm tpfile
