@@ -2,7 +2,7 @@
 
 # Function to show usage
 usage() {
-    echo "Usage: $0 dimension values [-j num_cores]"
+    echo "Usage: $0 executable dimension values [-j num_cores]"
     echo "  executable   The executable to run (e.g., ./a.out)"
     echo "  dimension    Dimension value (e.g., 3)"
     echo "  values       A comma-separated list of values (number of points in the subset) (e.g., 40,60,80,90)"
