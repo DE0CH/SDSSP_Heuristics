@@ -21,7 +21,7 @@ mkdir run-data
 ```bash
 cd run-data
 ```
-1. put your df_crit.csv in the directory and run (for example, see the help of each files for usage)
+1. put your df_crit.csv in the directory and run (for example). See the help of each files for usage
 ```bash
 python3 ../extract_csv.py df_crit.csv df_crit.txt
 ../run.sh -j 10 ../a.out df_crit.txt 3 2188 30,60,80,90,100,110,120
