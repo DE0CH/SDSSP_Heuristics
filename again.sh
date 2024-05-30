@@ -56,13 +56,14 @@ export executable
 export csv_file
 export dimension
 export values
+export SHIFT_TRIES
 
 # Define the function that will run the command
 command_function() {
     local value=$1
     python3 ../match_index.py ${csv_file} subset_${value}.txt /dev/null subset_complement_${value}.csv
     python3 ../extract_csv.py subset_complement_${value}.csv subset_complement_${value}.txt
-    SHIFT_TRIES=5000 ${executable} subset_complement_${value}.txt ${dimension} $(expr ${num_points} - ${value}) ${value} subset_complement_subset_${value}.txt 2>&1 | ts > log_subset_complement_${value}.txt
+    SHIFT_TRIES=${SHIFT_TRIES:-5000} ${executable} subset_complement_${value}.txt ${dimension} $(expr ${num_points} - ${value}) ${value} subset_complement_subset_${value}.txt 2>&1 | ts > log_subset_complement_${value}.txt
     python3 ../match_index.py ${csv_file} "subset_complement_subset_${value}.txt" "subset_complement_subset_${value}.csv" /dev/null 
     head -n 1 "subset_complement_subset_${value}.txt" | python3 -c 'import sys; import re; print(f"k={sys.argv[1]}", re.search(r"discrepancy=([\d\.]+)", input())[0])' "${value}"
 }

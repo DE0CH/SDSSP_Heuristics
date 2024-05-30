@@ -56,11 +56,12 @@ export executable
 export input_file
 export dimension    
 export num_points
+export SHIFT_TRIES
 
 # Define the function that will run the command
 command_function() {
     local value=$1
-    SHIFT_TRIES=5000 ${executable} ${input_file} ${dimension} ${num_points} ${value} subset_${value}.txt 2>&1 | ts > log_${value}.txt
+    SHIFT_TRIES=${SHIFT_TRIES:-5000} ${executable} ${input_file} ${dimension} ${num_points} ${value} subset_${value}.txt 2>&1 | ts > log_${value}.txt
 }
 
 # Export the function if parallel execution is used
