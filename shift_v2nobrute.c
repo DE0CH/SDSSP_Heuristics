@@ -894,7 +894,19 @@ int main(int argc, char **argv)
     }
   }
   double super_best=1.0;
-  for (nb_tries=0;nb_tries<5000;nb_tries++){
+  int tries;
+  char *tries_env = getenv("SHIFT_TRIES");
+  if (tries_env != NULL) {
+	tries = atoi(tries_env);
+	if (tries <= 0) {
+	  fprintf(stderr, "Invalid value for TRIES: %s\n", tries_env);
+	  exit(EXIT_FAILURE);
+	}
+  }
+  else {
+	tries = 50;
+  }
+  for (nb_tries=0;nb_tries<tries;nb_tries++){
   int rando1;
   int rando2;
   double *swap;
