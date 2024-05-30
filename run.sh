@@ -60,7 +60,6 @@ export num_points
 # Define the function that will run the command
 command_function() {
     local value=$1
-    echo ${executable}
     SHIFT_TRIES=5000 ${executable} ${input_file} ${dimension} ${num_points} ${value} subset_${value}.txt 2>&1 | ts > log_${value}.txt
 }
 
