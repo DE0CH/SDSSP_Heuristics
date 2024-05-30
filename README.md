@@ -1,16 +1,30 @@
 # SDSSP_Heuristics
-Heuristics for the Star Discrepancy Subset Selection Problem
 
-The four shift_ files contain the four instantiations of the heuristic.
-shift_TAnobrute is the TA variant with no brute-force check.
-shift_TA is the Ta variant with a brute force check.
-shift_v2 is the DEM variant with a  brute-force check.
-Finally, shift_v2no brute is the DEM variant without a brute force-check.
+This code is adapted from <https://github.com/frclement/SDSSP_Heuristics> for specific needs of (insert paper name). 
 
-Inputs are the input pointfile, the dimension, the initial number of points n, the final number of points k and the output file.
+## Dependencies:
+1. Python 3
+1. gcc and associated libaries (should be included in common linux distros)
+1. [`parallel`](https://manpages.ubuntu.com/manpages/jammy/man1/parallel.1.html) tool on linux (only if you want to run in parallel)
 
-point.c generates the 512 point Sobol set using the GNU Scientific Library, it requires the dimension as input.
 
-First batch contains point sets from our initial tests and generally contain the sets represented in the big Appendix tables.
-Second batch contains sets from more precise experiments, usually those used for the plots in the paper.
-In both cases, the file name should make the setting clear: Heuristic_dimension_n_k
+## Steps to reproduce:
+1. Compile shift_v2nobrute.c
+```bash
+gcc shift_v2nobrute.c -lm -O3
+```
+1. Make a directory. The script will litter the directory with files and overwrite things without warning. 
+```bash
+mkdir run-data
+```
+1. cd to the directory. IMPORTANT: the scripts will overwrite files in cwd without warning.
+```bash
+cd run-data
+```
+1. put your df_crit.csv in the directory and run (for example, see the help of each files for usage)
+```bash
+python3 ../extract_csv.py df_crit.csv df_crit.txt
+../run.sh -j 10 ../a.out df_crit.txt 3 2188 30,60,80,90,100,110,120
+../format.sh df_crit.csv 30,60,80,90,100,110,120 && ../split.sh -j 10 ../a.out 3 30,60,80,90,100,110,120
+```
+
