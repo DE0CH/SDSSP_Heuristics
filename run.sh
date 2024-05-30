@@ -63,8 +63,6 @@ command_function() {
     SHIFT_TRIES=5000 ${executable} ${input_file} ${dimension} ${num_points} ${value} subset_${value}.txt 2>&1 | ts > log_${value}.txt
 }
 
-echo $num_cores
-
 # Export the function if parallel execution is used
 if [ "$num_cores" -gt 1 ]; then
     export -f command_function
