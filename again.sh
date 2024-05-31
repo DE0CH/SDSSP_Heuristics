@@ -54,6 +54,7 @@ shift 5
 # Export variables needed for the command function
 export executable
 export csv_file
+export num_points
 export dimension
 export values
 export SHIFT_TRIES
