@@ -50,7 +50,7 @@ do
     fi
     if [[ $(head -n 1 subset_complement_subset_$value.txt) =~ $regex ]]
     then
-        echo "s1,${BASH_REMATCH[1]},${BASH_REMATCH[2]}"
+        echo "s2,${BASH_REMATCH[1]},${BASH_REMATCH[2]}"
     fi
 done
 ```
