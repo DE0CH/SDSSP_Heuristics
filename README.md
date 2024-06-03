@@ -25,6 +25,32 @@ cd run-data
 ```bash
 python3 ../extract_csv.py df_crit.csv df_crit.txt
 ../run.sh -j 10 ../a.out df_crit.txt 3 2188 30,60,80,90,100,110,120
-../format.sh df_crit.csv 30,60,80,90,100,110,120 && ../split.sh -j 10 ../a.out 3 30,60,80,90,100,110,120
+../format.sh df_crit.csv 30,60,80,90,100,110,120
+../split.sh -j 10 ../a.out 3 30,60,80,90,100,110,120
 ```
 
+If you want to do the other way of splitting (i.e. choose k points the n-k remaining k points after the first iteration). 
+
+```
+python3 ../extract_csv.py df_crit.csv df_crit.txt
+../run.sh -j 10 ../a.out df_crit.txt 3 2188 30,60,80,90,100,110,120
+../format.sh df_crit.csv 30,60,80,90,100,110,120 
+../again.sh -j 9 ../a.out df_crit.csv 1857 30,60,80,90,100,110,120 
+```
+
+1. print all the discrepancies into a csv file
+```bash
+regex='^.*k=([0-9]+).*discrepancy=(0\.[0-9]+).*$'
+echo 'which,k,discrepancy'
+for value in 30 60 80 90 100 110 120
+do
+    if [[ $(head -n 1 subset_$value.txt) =~ $regex ]]
+    then 
+        echo "s1,${BASH_REMATCH[1]},${BASH_REMATCH[2]}"
+    fi
+    if [[ $(head -n 1 subset_complement_subset_$value.txt) =~ $regex ]]
+    then
+        echo "s1,${BASH_REMATCH[1]},${BASH_REMATCH[2]}"
+    fi
+done
+```
